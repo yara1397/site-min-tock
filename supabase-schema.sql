@@ -1,9 +1,7 @@
 -- ══════════════════════════════════════════════════════════════
---  NEXUS — SUPABASE SCHEMA
---  مرحله ۱: این کل SQL رو در Supabase > SQL Editor اجرا کن
+--  NEXUS — اول این SQL رو در Supabase > SQL Editor اجرا کن
 -- ══════════════════════════════════════════════════════════════
 
--- ساخت جدول profiles
 CREATE TABLE IF NOT EXISTS public.profiles (
   id          UUID    REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   email       TEXT    NOT NULL,
@@ -16,10 +14,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   updated_at  TIMESTAMPTZ DEFAULT NOW()
 );
 
--- فعال کردن RLS
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
--- سیاست‌های دسترسی
 DROP POLICY IF EXISTS "select_own"   ON public.profiles;
 DROP POLICY IF EXISTS "update_own"   ON public.profiles;
 DROP POLICY IF EXISTS "insert_own"   ON public.profiles;
@@ -32,7 +28,6 @@ CREATE POLICY "admin_select" ON public.profiles FOR SELECT USING (
   EXISTS (SELECT 1 FROM public.profiles p2 WHERE p2.id = auth.uid() AND p2.role = 'admin')
 );
 
--- تریگر updated_at
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN NEW.updated_at = NOW(); RETURN NEW; END;
@@ -43,7 +38,6 @@ CREATE TRIGGER profiles_updated_at
   BEFORE UPDATE ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
--- تریگر ساخت خودکار profile هنگام ثبت‌نام
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -65,3 +59,7 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- بعد از اجرا، کاربر ادمین رو از Authentication > Users بساز
+-- بعد این رو اجرا کن:
+-- UPDATE public.profiles SET role = 'admin' WHERE email = 'admin@nexus.ir';
