@@ -1,9 +1,9 @@
 {
-  "name": "nexus-app",
+  "name": "nexus-final",
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start"
   },
@@ -14,6 +14,6 @@
     "@supabase/supabase-js": "2.39.0"
   },
   "engines": {
-    "node": "24.x"
+    "node": "20.x"
   }
 }
