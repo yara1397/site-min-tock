@@ -9,27 +9,42 @@ export default function App({ Component, pageProps }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        const { data } = await getProfile(session.user.id)
-        setProfile(data)
-      }
-      setLoading(false)
-    })
+    // حداکثر ۳ ثانیه صبر می‌کنیم — بعدش loading=false می‌شه
+    const timeout = setTimeout(() => setLoading(false), 3000)
+
+    supabase.auth.getSession()
+      .then(async ({ data: { session } }) => {
+        clearTimeout(timeout)
+        const u = session?.user ?? null
+        setUser(u)
+        if (u) {
+          try {
+            const { data } = await getProfile(u.id)
+            setProfile(data ?? null)
+          } catch { setProfile(null) }
+        }
+        setLoading(false)
+      })
+      .catch(() => {
+        clearTimeout(timeout)
+        setLoading(false)
+      })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setUser(session?.user ?? null)
-        if (session?.user) {
-          const { data } = await getProfile(session.user.id)
-          setProfile(data)
+        const u = session?.user ?? null
+        setUser(u)
+        if (u) {
+          try {
+            const { data } = await getProfile(u.id)
+            setProfile(data ?? null)
+          } catch { setProfile(null) }
         } else {
           setProfile(null)
         }
       }
     )
-    return () => subscription.unsubscribe()
+    return () => { clearTimeout(timeout); subscription.unsubscribe() }
   }, [])
 
   return (
