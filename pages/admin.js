@@ -35,8 +35,11 @@ export default function AdminPage({ user, profile, authLoading }) {
 
   useEffect(() => {
     if (authLoading) return
-    if (!user) { router.push('/login?from=/admin'); return }
-  }, [authLoading, user])
+    // لاگین نیست → صفحه ورود
+    if (!user) { router.replace('/login?from=/admin'); return }
+    // لاگین هست ولی ادمین نیست → برگرد به خانه
+    if (profile !== null && profile?.role !== 'admin') { router.replace('/'); return }
+  }, [authLoading, user, profile])
 
   useEffect(() => {
     if (tab === 'users' && user && profile?.role === 'admin') loadUsers()
